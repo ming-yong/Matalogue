@@ -47,10 +47,10 @@ class Matalogue extends React.Component {
 				<footer className="footer">
 					<button>
 						<a href="#" className="credit">
-							🥕豆腐制作
+							  <span role="img">🥕</span> 豆腐制作
 						</a>
 					</button>
-					<button onClick={this.resetAll}>🧄重来</button>
+					<button onClick={this.resetAll}><span role="img">🧄</span>重来</button>
 				</footer>
 			</div>
 		);
