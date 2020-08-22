@@ -1,6 +1,33 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import "./style.css";
+import { ApolloClient, InMemoryCache, ApolloProvider } from "@apollo/client";
+import { gql } from "@apollo/client";
+
+const client = new ApolloClient({
+	uri: "https://server.matters.news/graphql",
+	cache: new InMemoryCache(),
+});
+
+client
+	.query({
+		query: gql`
+			query {
+				user(input: { userName: "tofuming" }) {
+					articles(input: {}) {
+						edges {
+							node {
+								title
+								slug
+								mediaHash
+							}
+						}
+					}
+				}
+			}
+		`,
+	})
+	.then((result) => console.log(result));
 
 class Matalogue extends React.Component {
 	constructor(props) {
@@ -47,10 +74,10 @@ class Matalogue extends React.Component {
 				<footer className="footer">
 					<button>
 						<a href="#" className="credit">
-							  <span role="img">🥕</span> 豆腐制作
+							🥕豆腐制作
 						</a>
 					</button>
-					<button onClick={this.resetAll}><span role="img">🧄</span>重来</button>
+					<button onClick={this.resetAll}>🧄重来</button>
 				</footer>
 			</div>
 		);
@@ -102,7 +129,13 @@ function GrabFrom(props) {
 }
 
 function Result(props) {
-	return <form onSubmit={props.handleSubmit}></form>;
+	return (
+		<ApolloProvider client={client}>
+			<div>
+				<h2>My first Apollo app 🚀</h2>
+			</div>
+		</ApolloProvider>
+	);
 }
 
 ReactDOM.render(<Matalogue />, document.getElementById("root"));
