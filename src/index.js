@@ -4,7 +4,7 @@ import "./style.css";
 import { ApolloClient, InMemoryCache, ApolloProvider, useQuery, gql } from "@apollo/client";
 
 const client = new ApolloClient({
-	uri: "https://cors-anywhere.herokuapp.com/https://server.matters.news/graphql",
+	uri: "https://arcane-lake-88529.herokuapp.com/https://server.matters.news/graphql",
   cache: new InMemoryCache()
 });
 
