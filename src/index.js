@@ -1,141 +1,194 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import "./style.css";
-import { ApolloClient, InMemoryCache, ApolloProvider } from "@apollo/client";
-import { gql } from "@apollo/client";
+import { ApolloClient, InMemoryCache, ApolloProvider, useQuery, gql } from "@apollo/client";
 
 const client = new ApolloClient({
 	uri: "https://server.matters.news/graphql",
 	cache: new InMemoryCache(),
 });
 
-client
-	.query({
-		query: gql`
-			query {
-				user(input: { userName: "tofuming" }) {
-					articles(input: {}) {
-						edges {
-							node {
-								title
-								slug
-								mediaHash
-							}
-						}
+const GRAB_ARTICLES = gql`
+	query($userName: String!, $first: Int!) {
+		user(input: { userName: $userName }) {
+			articles(input: { first: $first }) {
+				edges {
+					node {
+						title
+						slug
+						mediaHash
+						createdAt
 					}
 				}
 			}
-		`,
-	})
-	.then((result) => console.log(result));
+		}
+	}
+`;
 
-class Matalogue extends React.Component {
+let userInfo = {
+	userName: "",
+	first: 20,
+	dateStart: "",
+	dateEnd: "",
+};
+
+function filterArticle(date) {
+	let formatted = date.slice(0, 10);
+	let start = userInfo.dateStart;
+	let end = userInfo.dateEnd;
+
+	if (start !== "" && end !== "") {
+		return formatted >= start && formatted <= end ? "keep" : "throw";
+	} else if (start !== "") {
+		return formatted >= start ? "keep" : "throw";
+	} else if (end !== "") {
+		return formatted <= end ? "keep" : "throw";
+	} else {
+		return "keep";
+	}
+}
+
+function Articles() {
+	const userName = userInfo.userName;
+	const first = parseInt(userInfo.first);
+	const { loading, error, data } = useQuery(GRAB_ARTICLES, {
+		variables: { userName, first },
+	});
+
+	if (loading) return <p>抓取中...</p>;
+  if (error) return <p>啊！程序出错了</p>;
+  if (data.user == null ||data.user.articles.edges.length === 0) return <p>什么都没抓到呢 ~</p>;
+
+	return data.user.articles.edges.map((article, index) => (
+		<div key={index}>
+			<p className="result_article">
+				<a className={filterArticle(article.node.createdAt)} href={`https://matters.news/@${userName}/${article.node.slug}-${article.node.mediaHash}`}>
+					{article.node.title}
+				</a>
+			</p>
+		</div>
+	));
+}
+
+class Result extends React.Component {
+	render() {
+		return (
+			<div className="result_articles">
+				<Articles />
+			</div>
+		);
+	}
+}
+
+class Grab extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = {
-			step: 1,
-			userName: "",
-			articleAmount: 100,
-			dateStart: "",
-			dateEnd: "",
+			...userInfo,
 		};
 
-		this.submitInfo = this.submitInfo.bind(this);
-		this.handleChange = this.handleChange.bind(this);
-		this.resetAll = this.resetAll.bind(this);
+		this.handleInput = this.handleInput.bind(this);
+		this.handleSubmit = this.handleSubmit.bind(this);
 	}
 
-	handleChange(event) {
+	handleInput(event) {
 		const target = event.target;
 		this.setState({
 			[target.name]: target.value,
 		});
 	}
 
-	submitInfo(event) {
-		alert(this.state.articleAmount);
-		if (this.state.userName !== "") {
-			this.setState({ step: 2 });
-		}
+	handleSubmit(event) {
+		this.props.setFill();
+		userInfo = this.state;
 		event.preventDefault();
-	}
-
-	resetAll(event) {
-		this.setState({ step: 1 });
 	}
 
 	render() {
 		return (
-			<div className="App">
-				<header>
-					<h1>Matalogue</h1>
-				</header>
-				<Form step={this.state.step} userName={this.state.userName} dateStart={this.state.dateStart} dateEnd={this.state.dateEnd} articleAmount={this.state.articleAmount} submitInfo={this.submitInfo} handleChange={this.handleChange} />
-				<footer className="footer">
-					<button>
-						<a href="#" className="credit">
-							🥕豆腐制作
-						</a>
-					</button>
-					<button onClick={this.resetAll}>🧄重来</button>
-				</footer>
-			</div>
+			<form onSubmit={this.handleSubmit}>
+				<div className="grab_row">
+					<label>
+						用户名
+						<input type="text" name="userName" onChange={this.handleInput} value={this.state.userName} required />
+					</label>
+				</div>
+
+				<div className="grab_row">
+					<label>
+						文章数量
+						<input type="number" name="first" onChange={this.handleInput} value={this.state.first} />
+					</label>
+				</div>
+				<div className="grab_row">
+					<label>
+						从
+						<input type="date" name="dateStart" onChange={this.handleInput} value={this.state.dateStart} />
+					</label>
+					<label>
+						到
+						<input type="date" name="dateEnd" onChange={this.handleInput} value={this.state.dateEnd} />
+					</label>
+				</div>
+				<input type="submit" value="🥔抓!" className="grab_btn" />
+			</form>
 		);
 	}
 }
 
-function Form(props) {
-	switch (props.step) {
-		case 2:
-			return <Result />;
-		default:
-			return <GrabFrom userName={props.userName} articleAmount={props.articleAmount} dateStart={props.dateStart} dateEnd={props.dateEnd} submitInfo={props.submitInfo} handleChange={props.handleChange} />;
+function Content(props) {
+	if (props.filled) {
+		return <Result />;
+	} else {
+		return <Grab setFill={props.setFill} />;
 	}
 }
 
-function GrabFrom(props) {
-	return (
-		<form onSubmit={props.submitInfo}>
-			<div className="row">
-				<label>
-					用户名
-					<input type="text" name="userName" onChange={props.handleChange} value={props.userName} />
-				</label>
-			</div>
+class Matalogue extends React.Component {
+	constructor(props) {
+		super(props);
+		this.state = {
+			filled: false,
+		};
 
-			<div className="row">
-				<label>
-					文章数量
-					<input type="number" name="articleAmount" onChange={props.handleChange} value={props.articleAmount} />
-				</label>
-			</div>
+		this.setFill = this.setFill.bind(this);
+	}
 
-			<div className="row">
-				<label>
-					从
-					<input type="date" name="dateStart" onChange={props.handleChange} value={props.dateStart} />
-				</label>
-				<label>
-					到
-					<input type="date" name="dateEnd" onChange={props.handleChange} value={props.dateEnd} />
-				</label>
-			</div>
+	setFill() {
+		this.setState({ filled: true });
+	}
 
-			<div className="row">
-				<input type="submit" value="抓！" className="btn" />
-			</div>
-		</form>
-	);
+	render() {
+		return (
+			<ApolloProvider client={client}>
+				<div className="matalogue">
+					<header>
+						<h1>Matalogue</h1>
+					</header>
+					<div className="content">
+						<Content filled={this.state.filled} setFill={this.setFill} />
+					</div>
+					<footer>
+						<button>
+							<a href="https://matters.news/@tofuming" target="blank">
+								<span role="img" aria-label="emoji">
+									🥕
+								</span>
+								豆腐制作
+							</a>
+						</button>
+						<button>
+							<a href="https://www.tofumind.space/matalogue%e7%9a%84%e4%bd%bf%e7%94%a8%e6%89%8b%e5%86%8c/" target="blank">
+								<span role="img" aria-label="emoji">
+									🧄
+								</span>
+								使用方法
+							</a>
+						</button>
+					</footer>
+				</div>
+			</ApolloProvider>
+		);
+	}
 }
-
-function Result(props) {
-	return (
-		<ApolloProvider client={client}>
-			<div>
-				<h2>My first Apollo app 🚀</h2>
-			</div>
-		</ApolloProvider>
-	);
-}
-
 ReactDOM.render(<Matalogue />, document.getElementById("root"));

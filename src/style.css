@@ -10,31 +10,55 @@ body {
 	height: 100%;
 }
 
+header {
+	background: rgba(255, 140, 0, 0.705);
+}
+
+footer{
+	padding-top:1em;
+  display: flex;
+  justify-content: space-between;
+}
+
+footer a {
+  color: black;
+  text-decoration: none;
+}
+
 body {
 	display: flex;
 	justify-content: center;
 	align-items: center;
 }
 
-.App {
+.matalogue {
 	text-align: center;
 	border: 2px solid black;
 	box-shadow: 10px 10px rgb(255, 140, 0);
 	padding: 1em;
 }
 
-.row {
+.content{
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-width:20em;
+	min-height:10em;
+	padding:1em;
+}
+
+.grab_row {
 	display: flex;
 	justify-content: center;
 	align-items: center;
 	margin: 1em 0.5em;
 }
 
-.row input {
+.grab_row input {
 	margin: 0 0.5em;
 }
 
-.btn {
+.grab_btn {
 	padding: 0.5em 1em;
 	cursor: pointer;
 	background: white;
@@ -42,17 +66,24 @@ body {
 	border-radius: 5%;
 }
 
-.btn:hover {
+.grab_btn:hover {
 	transform: scale(0.9);
 	box-shadow: 1px 1px rgb(255, 140, 0);
 }
 
-.credit {
-  color: black;
-  text-decoration: none;
+.result_articles{
+	text-align: left;
 }
 
-.footer{
-  display: flex;
-  justify-content: space-between;
+.result_article{
+	margin:0.25em 0;
+}
+
+.keep{
+	color:black;
+}
+
+.throw{
+	display: none;
+	visibility: hidden;
 }
