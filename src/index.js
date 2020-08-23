@@ -5,10 +5,7 @@ import { ApolloClient, InMemoryCache, ApolloProvider, useQuery, gql } from "@apo
 
 const client = new ApolloClient({
 	uri: "https://server.matters.news/graphql",
-  cache: new InMemoryCache(),
-  headers: {
-    'Access-Control-Allow-Origin': 'https://matalogue.netlify.app'
-  }
+  cache: new InMemoryCache()
 });
 
 const GRAB_ARTICLES = gql`
