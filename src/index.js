@@ -5,7 +5,8 @@ import { ApolloClient, InMemoryCache, ApolloProvider, useQuery, gql } from "@apo
 
 const client = new ApolloClient({
 	uri: "https://server.matters.news/graphql",
-	cache: new InMemoryCache(),
+  cache: new InMemoryCache(),
+  credentials: 'include'
 });
 
 const GRAB_ARTICLES = gql`

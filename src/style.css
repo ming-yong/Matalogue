@@ -14,15 +14,15 @@ header {
 	background: rgba(255, 140, 0, 0.705);
 }
 
-footer{
-	padding-top:1em;
-  display: flex;
-  justify-content: space-between;
+footer {
+	padding-top: 1em;
+	display: flex;
+	justify-content: space-between;
 }
 
 footer a {
-  color: black;
-  text-decoration: none;
+	color: black;
+	text-decoration: none;
 }
 
 body {
@@ -38,13 +38,12 @@ body {
 	padding: 1em;
 }
 
-.content{
+.content {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	min-width:20em;
-	min-height:10em;
-	padding:1em;
+	min-width: 20em;
+	min-height: 15em;
 }
 
 .grab_row {
@@ -71,19 +70,22 @@ body {
 	box-shadow: 1px 1px rgb(255, 140, 0);
 }
 
-.result_articles{
+.result_articles {
 	text-align: left;
+	max-height: 15em;
+	padding: 1em;
+	overflow-y:scroll;
 }
 
-.result_article{
-	margin:0.25em 0;
+.result_article {
+	margin: 0.25em 0;
 }
 
-.keep{
-	color:black;
+.keep {
+	color: black;
 }
 
-.throw{
+.throw {
 	display: none;
 	visibility: hidden;
 }
