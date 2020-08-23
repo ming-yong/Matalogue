@@ -170,7 +170,7 @@ class Matalogue extends React.Component {
 					</div>
 					<footer>
 						<button>
-							<a href="https://matters.news/@tofuming" target="blank">
+							<a href="https://matters.news/@tofuming" target="_blank">
 								<span role="img" aria-label="emoji">
 									🥕
 								</span>
@@ -178,7 +178,7 @@ class Matalogue extends React.Component {
 							</a>
 						</button>
 						<button>
-							<a href="https://www.tofumind.space/matalogue%e7%9a%84%e4%bd%bf%e7%94%a8%e6%89%8b%e5%86%8c/" target="blank">
+							<a href="https://www.tofumind.space/matalogue%e7%9a%84%e4%bd%bf%e7%94%a8%e6%89%8b%e5%86%8c/" target="_blank">
 								<span role="img" aria-label="emoji">
 									🧄
 								</span>
