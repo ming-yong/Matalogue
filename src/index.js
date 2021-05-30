@@ -259,7 +259,7 @@ class Matalogue extends React.Component {
 
 				<footer>
 					<button>
-						<a href="#">🧄使用方法</a>
+						<a href="https://mingy.space/blog/matalogue-version2/">🧄使用方法</a>
 					</button>
 				</footer>
 			</div>
