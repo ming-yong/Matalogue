@@ -5,7 +5,7 @@ import "./style.css";
 function Article(props) {
 	return (
 		<div>
-			{ props.withNum ? <span className="article_no">{props.no}.</span> : null}
+			{ props.withNum ? <span>{props.no}.</span> : null}&nbsp;
 			<a href={props.link}>{props.title}</a>
 			{ props.withDate ? <span>({props.date})</span> : null }
 		</div>
@@ -63,10 +63,14 @@ function Step2(props) {
 				</div>
 			</div>
 
-			<div className="articles">{display}</div>
+			<div id="articles" className="articles">{display}</div>
 
 			<button className="stepBtn" onClick={props.goBackToStepOne}>
 				🥕上一步
+			</button>
+			
+			<button id="btnCopy" className="stepBtn" onClick={props.copyToClipBoard}>
+				🐚拷贝
 			</button>
 		</div>
 	);
@@ -123,6 +127,7 @@ class Matalogue extends React.Component {
 		this.handleEdit = this.handleEdit.bind(this);
 		this.handleInput = this.handleInput.bind(this);
 		this.goBackToStepOne = this.goBackToStepOne.bind(this);
+		this.copyToClipBoard = this.copyToClipBoard.bind(this);
 	}
 
 	grabPosts(event) {
@@ -215,6 +220,19 @@ class Matalogue extends React.Component {
 		this.setState({ currentStep: 1 });
 	}
 
+	copyToClipBoard() {
+		const articles = document.getElementById("articles");
+		const btnCopy = document.getElementById("btnCopy");
+		let r = document.createRange();
+		r.selectNode(articles);
+		window.getSelection().removeAllRanges();
+		window.getSelection().addRange(r);
+		document.execCommand('copy');
+		window.getSelection().removeAllRanges();
+		btnCopy.classList.add("shake");
+		setTimeout(()=>{btnCopy.classList.remove("shake")}, 400)
+	}
+
 	render() {
 		return (
 			<div className="matalogue">
@@ -235,6 +253,7 @@ class Matalogue extends React.Component {
 						edit = { this.state.edit } 
 						handleEdit = { this.handleEdit } 
 						goBackToStepOne = { this.goBackToStepOne } 
+						copyToClipBoard = { this.copyToClipBoard }
 					/>
 				</div>
 
