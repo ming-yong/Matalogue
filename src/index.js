@@ -1,194 +1,251 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import "./style.css";
-import { ApolloClient, InMemoryCache, ApolloProvider, useQuery, gql } from "@apollo/client";
 
-const client = new ApolloClient({
-	uri: "https://arcane-lake-88529.herokuapp.com/https://server.matters.news/graphql",
-  cache: new InMemoryCache()
-});
-
-const GRAB_ARTICLES = gql`
-	query($userName: String!, $first: Int!) {
-		user(input: { userName: $userName }) {
-			articles(input: { first: $first }) {
-				edges {
-					node {
-						title
-						slug
-						mediaHash
-						createdAt
-					}
-				}
-			}
-		}
-	}
-`;
-
-let userInfo = {
-	userName: "",
-	first: 20,
-	dateStart: "",
-	dateEnd: "",
-};
-
-function filterArticle(date) {
-	let formatted = date.slice(0, 10);
-	let start = userInfo.dateStart;
-	let end = userInfo.dateEnd;
-
-	if (start !== "" && end !== "") {
-		return formatted >= start && formatted <= end ? "keep" : "throw";
-	} else if (start !== "") {
-		return formatted >= start ? "keep" : "throw";
-	} else if (end !== "") {
-		return formatted <= end ? "keep" : "throw";
-	} else {
-		return "keep";
-	}
-}
-
-function Articles() {
-	const userName = userInfo.userName;
-	const first = parseInt(userInfo.first);
-	const { loading, error, data } = useQuery(GRAB_ARTICLES, {
-		variables: { userName, first },
-	});
-
-	if (loading) return <p>抓取中...</p>;
-  if (error) return <p>啊！程序出错了</p>;
-  if (data.user == null ||data.user.articles.edges.length === 0) return <p>什么都没抓到呢 ~</p>;
-
-	return data.user.articles.edges.map((article, index) => (
-		<div key={index}>
-			<p className="result_article">
-				<a className={filterArticle(article.node.createdAt)} href={`https://matters.news/@${userName}/${article.node.slug}-${article.node.mediaHash}`}>
-					{article.node.title}
-				</a>
-			</p>
+function Article(props) {
+	return (
+		<div>
+			{ props.withNum ? <span className="article_no">{props.no}.</span> : null}
+			<a href={props.link}>{props.title}</a>
+			{ props.withDate ? <span>({props.date})</span> : null }
 		</div>
-	));
+	);
 }
 
-class Result extends React.Component {
-	render() {
-		return (
-			<div className="result_articles">
-				<Articles />
+function Step2(props) {
+	if (props.currentStep !== 2) {
+		return null;
+	}
+
+	let display;
+
+	switch (props.articles) {
+		case 0:
+			display = "什么都没抓到。";
+			break;
+		case -1:
+			display = "程序出错了，或许是此用户不存在。";
+			break;
+		default:
+			const { startDate, endDate, withNum, withDate, sortDateAsc } = props.edit;
+			let articles = props.articles.sort((a, b) => (sortDateAsc ? new Date(b.date) - new Date(a.date) : new Date(a.date) - new Date(b.date)));
+
+			if (startDate !== "") articles = articles.filter((article) => article.date > startDate);
+			if (endDate !== "") articles = articles.filter((article) => article.date < endDate);
+
+			display = articles.map((a, index) => <Article key={index} link={a.link} title={a.title} date={a.date.slice(0, 10)} no={index + 1} withNum={withNum} withDate={withDate} />);
+			break;
+	}
+
+	return (
+		<div>
+			<div className="step2EditPanel">
+				<div className="stepRow">
+						<div className="step2EditSet">
+						<input type="checkbox" name="withNum" id="withNum" checked={props.edit.withNum} onChange={props.handleEdit} />
+						<label htmlFor="withNum">加序号</label>
+					</div>
+					<div className="step2EditSet">
+						<input type="checkbox" name="withDate" id="withDate" checked={props.edit.withDate} onChange={props.handleEdit} />
+						<label htmlFor="withDate">加日期</label>
+					</div>
+					<div className="step2EditSet">
+						<input type="checkbox" name="sortDateAsc" id="sortDateAsc" checked={props.edit.sortDateAsc} onChange={props.handleEdit} />
+						<label htmlFor="sortDateAsc">排序新到旧</label>
+					</div>
+				</div>
+
+				<div className="stepRow">
+					<label htmlFor="startDate">只要日期介于：</label>
+					<input type="date" name="startDate" value={props.edit.startDate} onChange={props.handleEdit} />
+					<label htmlFor="endDate">到</label>
+					<input type="date" name="endDate" value={props.edit.endDate} onChange={props.handleEdit} />
+				</div>
 			</div>
-		);
-	}
+
+			<div className="articles">{display}</div>
+
+			<button className="stepBtn" onClick={props.goBackToStepOne}>
+				🥕上一步
+			</button>
+		</div>
+	);
 }
 
-class Grab extends React.Component {
-	constructor(props) {
-		super(props);
-		this.state = {
-			...userInfo,
-		};
-
-		this.handleInput = this.handleInput.bind(this);
-		this.handleSubmit = this.handleSubmit.bind(this);
+function Step1(props) {
+	if (props.currentStep !== 1) {
+		return null;
 	}
 
-	handleInput(event) {
-		const target = event.target;
-		this.setState({
-			[target.name]: target.value,
-		});
-	}
+	return (
+		<form>
+			<div className="stepRow">
+				<label>
+					用户名
+					<input type="text" name="userName" onChange={props.handleInput} value={props.userInfo.userName} required />
+				</label>
+			</div>
 
-	handleSubmit(event) {
-		this.props.setFill();
-		userInfo = this.state;
-		event.preventDefault();
-	}
+			<div className="stepRow">
+				<label>
+					文章数量
+					<input type="number" name="first" onChange={props.handleInput} value={props.userInfo.first} />
+				</label>
+			</div>
 
-	render() {
-		return (
-			<form onSubmit={this.handleSubmit}>
-				<div className="grab_row">
-					<label>
-						用户名
-						<input type="text" name="userName" onChange={this.handleInput} value={this.state.userName} required />
-					</label>
-				</div>
-
-				<div className="grab_row">
-					<label>
-						文章数量
-						<input type="number" name="first" onChange={this.handleInput} value={this.state.first} />
-					</label>
-				</div>
-				<div className="grab_row">
-					<label>
-						从
-						<input type="date" name="dateStart" onChange={this.handleInput} value={this.state.dateStart} />
-					</label>
-					<label>
-						到
-						<input type="date" name="dateEnd" onChange={this.handleInput} value={this.state.dateEnd} />
-					</label>
-				</div>
-				<input type="submit" value="🥔抓!" className="grab_btn" />
-			</form>
-		);
-	}
-}
-
-function Content(props) {
-	if (props.filled) {
-		return <Result />;
-	} else {
-		return <Grab setFill={props.setFill} />;
-	}
+			<button className="stepBtn" onClick={props.grabPosts}>
+				🥔抓!
+			</button>
+		</form>
+	);
 }
 
 class Matalogue extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = {
-			filled: false,
+			currentStep: 1,
+			userInfo: {
+				userName: "",
+				first: 20,
+			},
+			edit: {
+				startDate: "",
+				endDate: "",
+				withNum: true,
+				withDate: true,
+				sortDateAsc: true,
+			},
+			articles: 0
 		};
 
-		this.setFill = this.setFill.bind(this);
+		this.grabPosts = this.grabPosts.bind(this);
+		this.handleEdit = this.handleEdit.bind(this);
+		this.handleInput = this.handleInput.bind(this);
+		this.goBackToStepOne = this.goBackToStepOne.bind(this);
 	}
 
-	setFill() {
-		this.setState({ filled: true });
+	grabPosts(event) {
+		if (this.state.userInfo.userName.length <= 0) {
+			return;
+		}
+
+		const { userName, first } = this.state.userInfo;
+		const content = document.getElementById("contentBox");
+		const fetchURL = "https://arcane-lake-88529.herokuapp.com/https://server.matters.news/graphql";
+		const fetchQuery = `
+			query ($userName: String!, $first: Int!) {
+				user(input: { userName: $userName }) {
+					articles(input: { first: $first }) {
+						edges {
+							node {
+								title
+								slug
+								mediaHash
+								createdAt
+							}
+						}
+					}
+				}
+			}
+		`;
+		const header = { "Content-Type": "application/json" };
+		const body = JSON.stringify({
+			query: fetchQuery,
+			variables: {
+				userName: userName,
+				first: parseInt(first),
+			},
+		});
+
+		event.preventDefault();
+		content.classList.add("waiting");
+
+		fetch(fetchURL, {
+			method: "POST",
+			headers: header,
+			body: body,
+		})
+			.then((res) => res.json())
+			.then((result) => {
+				content.classList.remove("waiting");
+				let user = result.data.user;
+				let fetchedArticles;
+
+				if (!user) {
+					fetchedArticles = -1;
+				} else {
+					fetchedArticles = user.articles.edges;
+
+					if (fetchedArticles.length === 0) {
+						fetchedArticles = 0;
+					} else {
+						fetchedArticles = fetchedArticles.map((article) => (
+							{ 
+								date: article.node.createdAt, 
+								link: `https://matters.news/@${userName}/${article.node.slug}-${article.node.mediaHash}`, 
+								title: article.node.title 
+							}
+						));
+					}
+				}
+
+				this.setState({ currentStep: 2, articles: fetchedArticles });
+			})
+			.catch((err) => console.error(err));
+	}
+
+	handleEdit(event) {
+		const target = event.target;
+		const value = target.type === "checkbox" ? target.checked : target.value;
+		const name = target.name;
+		let newEdit = this.state.edit;
+		newEdit[name] = value;
+		this.setState({ edit: newEdit });
+	}
+
+	handleInput(event) {
+		const { name, value } = event.target;
+		let newInfo = this.state.userInfo;
+		newInfo[name] = value;
+		this.setState({ userInfo: newInfo });
+	}
+
+	goBackToStepOne() {
+		this.setState({ currentStep: 1 });
 	}
 
 	render() {
 		return (
-			<ApolloProvider client={client}>
-				<div className="matalogue">
-					<header>
-						<h1>Matalogue</h1>
-					</header>
-					<div className="content">
-						<Content filled={this.state.filled} setFill={this.setFill} />
-					</div>
-					<footer>
-						<button>
-							<a href="https://matters.news/@tofuming" target="_blank">
-								<span role="img" aria-label="emoji">
-									🥕
-								</span>
-								豆腐制作
-							</a>
-						</button>
-						<button>
-							<a href="https://www.tofumind.space/matalogue%e7%9a%84%e4%bd%bf%e7%94%a8%e6%89%8b%e5%86%8c/" target="_blank">
-								<span role="img" aria-label="emoji">
-									🧄
-								</span>
-								使用方法
-							</a>
-						</button>
-					</footer>
+			<div className="matalogue">
+				<header>
+					<h1>Matalogue</h1>
+				</header>
+
+				<div id="contentBox" className="content">
+					<Step1 
+						currentStep = { this.state.currentStep } 
+						userInfo = { this.state.userInfo } 
+						handleInput = { this.handleInput } 
+						grabPosts = { this.grabPosts } 
+					/>
+					<Step2 
+						currentStep = { this.state.currentStep } 
+						articles = { this.state.articles } 
+						edit = { this.state.edit } 
+						handleEdit = { this.handleEdit } 
+						goBackToStepOne = { this.goBackToStepOne } 
+					/>
 				</div>
-			</ApolloProvider>
+
+				<footer>
+					<button>
+						<a href="#">🧄使用方法</a>
+					</button>
+				</footer>
+			</div>
 		);
 	}
 }
+
 ReactDOM.render(<Matalogue />, document.getElementById("root"));
